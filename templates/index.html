@@ -23,18 +23,19 @@
 </head>
 <body>
     <h1>Webcam Video Stream</h1>
-    <!-- <div id="videoContainer">
+    <div id="videoContainer">
         <img id="videoElement" src="{{ url_for('video_feed') }}">
-    </div> -->
+    </div>
     <div id="valuesContainer">
         <!-- Values will be dynamically updated here -->
     </div>
     <script>
         // Function to update values
-        function updateValues(sentiment) {
-            var valuesContainer = document.getElementById('valuesContainer');
-            var displaySentiment = sentiment;
-            valuesContainer.innerHTML = '<p>Sentiment: ' + displaySentiment + '</p>'; // Update content
+        function updateValues(sentiment, confidence) {
+            let valuesContainer = document.getElementById('valuesContainer');
+            let displaySentiment = sentiment;
+            let confidenceSentiment = confidence
+            valuesContainer.innerHTML = '<p>Sentiment: ' + displaySentiment + '</p><p> Confidence: ' + confidenceSentiment + '</p>'; // Update content
         }
 
         // Function to fetch sentiment values from server
@@ -42,7 +43,7 @@
             fetch('/fetch_values') // Route to fetch values from server
             .then(response => response.json())
             .then(data => {
-                updateValues(data.sentiment); // Update values
+                updateValues(data.sentiment, data.confidence); // Update values
             })
             .catch(error => {
                 console.error('Error fetching values:', error);
