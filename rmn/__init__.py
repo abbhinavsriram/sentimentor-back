@@ -1,0 +1,2 @@
+def RMN():
+    return None
