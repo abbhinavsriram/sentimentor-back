@@ -8,8 +8,10 @@ app = Flask(__name__)
 m = RMN()
 finalSentiment = 'neutral'
 finalConfidence = 0
+isDrowsy = False
 
 
+@app.route('/sentiment')
 def generate_frames():
     cap = cv2.VideoCapture(0)  # Capture video from webcam
     while True:
@@ -63,7 +65,7 @@ def generate_frames():
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         time.sleep(2)
     cap.release()
-
+    return jsonify({'sentiment': finalSentiment, 'confidence': finalConfidence})
 
 @app.route('/fetch_values')
 def fetch_values():
