@@ -1,3 +1,4 @@
+import time
 from flask import Flask, render_template, Response, jsonify
 import cv2
 from rmn import RMN  # Assuming RMN is imported from a custom module
@@ -6,18 +7,28 @@ app = Flask(__name__)
 
 m = RMN()
 results = None
+
 def generate_frames():
     cap = cv2.VideoCapture(0)  # Capture video from webcam
     while True:
+        sentiment = "neutral"
         ret, frame = cap.read()  # Read frame from webcam
         if not ret:
             break
+        global results
         results = m.detect_emotion_for_single_frame(frame)  # Detect emotions
-        frame_with_results = m.draw(frame, results)  # Draw emotions on the frame
+        if len(results) > 0:
+            sentiment = results[0]['emo_label']
+        # Draw sentiment on the frame
+        frame_with_sentiment = frame.copy()
+        cv2.putText(frame_with_sentiment, f"Sentiment: {sentiment}", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        frame_with_results = m.draw(frame_with_sentiment, results)  # Draw emotions on the frame
         ret, buffer = cv2.imencode('.jpg', frame_with_results)
         frame_bytes = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        # time.sleep(2)
     cap.release()
 
 @app.route('/')
@@ -30,18 +41,16 @@ def video_feed():
 
 @app.route('/fetch_values')
 def fetch_values():
-    sentiment = "No value"
+    global results
+    sentiment = "None"
     if results is not None:
-        sentiment = results[0]['emo_value']
+        if len(results) > 0:
+            sentiment = results[0]['emo_label']
+    if sentiment.lower() not in ['neutral', 'happy']:
+        sentiment = 'confused'
+    else:
+        sentiment = 'happy'
 
-        # Replace sentiment value if not Neutral or Happy
-        if sentiment.lower() not in ['neutral', 'happy']:
-            sentiment = 'Confused'
-        else:
-            sentiment = 'Happy'
-
-        # Return sentiment as JSON
-    
     return jsonify({'sentiment': sentiment})
 
 if __name__ == '__main__':
