@@ -4,11 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webcam Video Stream</title>
+    <style>
+        #videoContainer {
+            width: 640px; /* Set desired width */
+            height: 480px; /* Set desired height */
+            float: left; /* Float the container to the left */
+            margin-right: 20px; /* Add some margin to the right */
+        }
+        #videoElement {
+            width: 100%;
+            height: 100%;
+        }
+        #valuesContainer {
+            float: left; /* Float the container to the left */
+            font-size: 18px; /* Set font size */
+        }
+    </style>
 </head>
 <body>
     <h1>Webcam Video Stream</h1>
-    <div>
-        <img src="{{ url_for('video_feed') }}" style="width:100%;">
+    <div id="videoContainer">
+        <img id="videoElement" src="{{ url_for('video_feed') }}">
     </div>
+    <div id="valuesContainer">
+        <!-- Values will be dynamically updated here -->
+    </div>
+    <script>
+        // Function to update values
+        function updateValues(sentiment) {
+            var valuesContainer = document.getElementById('valuesContainer');
+            var displaySentiment = sentiment;
+            valuesContainer.innerHTML = '<p>Sentiment: ' + displaySentiment + '</p>'; // Update content
+        }
+
+        // Function to fetch sentiment values from server
+        function fetchValues() {
+            fetch('/fetch_values') // Route to fetch values from server
+            .then(response => response.json())
+            .then(data => {
+                updateValues(data.sentiment); // Update values
+            })
+            .catch(error => {
+                console.error('Error fetching values:', error);
+            });
+        }
+
+        // Fetch values periodically (adjust interval as needed)
+        setInterval(fetchValues, 1000);
+    </script>
 </body>
 </html>
