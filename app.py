@@ -31,13 +31,29 @@ def generate_frames():
         # time.sleep(2)
     cap.release()
 
+def get_sentiment(image):
+    results = m.detect_emotion_for_single_frame(image)
+    print(results)
+    image = m.draw(image, results)
+    sentiment = "None"
+    if results is not None:
+        if len(results) > 0:
+            sentiment = results[0]['emo_label']
+    if sentiment.lower() not in ['neutral', 'happy']:
+        sentiment = 'confused'
+    else:
+        sentiment = 'content'
+    return sentiment
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    image_path = "C:\\Users\\abbhi\\Pictures\\Camera Roll\\WIN_20240323_15_50_40_Pro.jpg"
+    return Response(get_sentiment(image_path), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/fetch_values')
 def fetch_values():
@@ -55,3 +71,8 @@ def fetch_values():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+
+    
+
