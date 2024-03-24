@@ -1,5 +1,4 @@
-import time
-from flask import Flask, render_template, Response, jsonify
+from flask import Flask, render_template, Response, jsonify, request
 import cv2
 from keras.models import load_model
 from rmn import RMN  # Assuming RMN is imported from a custom module
@@ -8,6 +7,7 @@ import base64
 from PIL import Image
 from keras.preprocessing.image import img_to_array
 import numpy as np
+import imghdr
 
 app = Flask(__name__)
 
@@ -16,16 +16,31 @@ finalSentiment = 'neutral'
 finalConfidence = 0
 isDrowsy = False
 
+def is_image_from_base64(base64_string):
+    try:
+        byte_sequence = base64.b64decode(base64_string)
+        image_type = imghdr.what(None, h=byte_sequence)
+        return image_type is not None
+    except:
+        return False
 
 def readb64(base64_string):
-    sbuf = BytesIO()
-    sbuf.write(base64.b64decode(base64_string))
-    pimg = Image.open(sbuf)
+    _, base64_data = base64_string.split(',', 1)
+    padding = len(base64_data) % 4
+    if padding != 0:
+        base64_data += '=' * (4 - padding)
+    base64_data = base64_data.replace(' ', '+')
+    image_data = base64.b64decode(base64_data)
+    pimg = Image.open(BytesIO(image_data))
     return cv2.cvtColor(np.array(pimg), cv2.COLOR_RGB2BGR)
 
 
 @app.route('/sentiment')
-def generate_frames(imageString=None):
+def generate_frames(imagestring=None):
+    imageString = request.args.get('imageString')  # Get imageString from request parameters
+    if imageString is None:
+        return jsonify({'error': 'No imageString provided'})
+
     global finalSentiment, finalConfidence, isDrowsy
     sentiments = [0] * 7
     image = readb64(imageString)
