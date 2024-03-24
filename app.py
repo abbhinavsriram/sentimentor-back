@@ -1,6 +1,7 @@
 import time
 from flask import Flask, render_template, Response, jsonify
 import cv2
+from keras.models import load_model
 from rmn import RMN  # Assuming RMN is imported from a custom module
 
 app = Flask(__name__)
@@ -13,12 +14,18 @@ isDrowsy = False
 
 @app.route('/sentiment')
 def generate_frames():
+    classes = ['Closed', 'Open']
+    model = load_model("drowsiness_model/drowsiness_new7.h5")
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    left_eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_lefteye_2splits.xml')
+    right_eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_righteye_2splits.xml')
+    count = 0
+
     cap = cv2.VideoCapture(0)  # Capture video from webcam
     start_time = time.time()  # Record the start time
     while True:
         if time.time() - start_time >= 5:
             break
-
         sentiment = "neutral"
         sentiments = [0] * 7
         ret, frame = cap.read()  # Read frame from webcam
@@ -34,10 +41,8 @@ def generate_frames():
             sentiments[4] = results[0]['proba_list'][4]['sad'] + 0.1
             sentiments[5] = results[0]['proba_list'][5]['surprise'] + 0.4
             sentiments[6] = results[0]['proba_list'][6]['neutral'] - 0.4
-
         max_confidence = max(sentiments)
         max_confidence_idx = sentiments.index(max_confidence)
-
         if max_confidence_idx == 0:
             finalSentiment = "angry"
         elif max_confidence_idx == 1:
@@ -53,11 +58,6 @@ def generate_frames():
         elif max_confidence_idx == 6:
             finalSentiment = "neutral"
 
-        finalConfidence = max_confidence
-
-        # Sleep for a short interval to prevent excessive CPU usage
-        time.sleep(0.1)
-
     # # print(sentiment)
     # # Draw sentiment on the frame
     # frame_with_sentiment = frame.copy()
@@ -71,12 +71,11 @@ def generate_frames():
     # time.sleep(2)
     # # yield jsonify({'sentiment': finalSentiment, 'confidence': finalConfidence})
     cap.release()
-
     if finalSentiment.lower() not in ['neutral', 'happy']:
         finalSentiment = 'confused'
     else:
         finalSentiment = 'content'
-
+    finalConfidence = max_confidence
     # Return the data in JSON format after 5 seconds
     data = {'sentiment': finalSentiment, 'confidence': finalConfidence}
     return jsonify(data)
