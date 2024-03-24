@@ -28,8 +28,8 @@ def readb64(base64_string):
 def generate_frames(imageString=None):
     global finalSentiment, finalConfidence, isDrowsy
     sentiments = [0] * 7
-    # image = readb64(imageString)
-    image = cv2.imread("photo.jpg")
+    image = readb64(imageString)
+    # image = cv2.imread("photo.jpg")
     results = m.detect_emotion_for_single_frame(image)
     if len(results) > 0:
         sentiments[0] = results[0]['proba_list'][0]['angry'] + 0.2
